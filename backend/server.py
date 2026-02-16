@@ -11,6 +11,13 @@ import uuid
 from datetime import datetime, timezone
 import asyncio
 
+# Configure logging early
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 from models.stock_models import (
     Stock, WatchlistItem, PortfolioHolding, Portfolio,
     NewsItem, ScreenerRequest, ScreenerFilter, LLMInsightRequest
