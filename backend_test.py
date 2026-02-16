@@ -504,6 +504,330 @@ class StockAnalysisPlatformTester:
             print(f"\n✅ Scoring engine test completed for {symbol}")
             print("-" * 40)
 
+    def test_investment_checklists(self):
+        """Test Investment Checklists implementation for medium priority items"""
+        print("\n" + "="*60)
+        print("TESTING INVESTMENT CHECKLISTS - MEDIUM PRIORITY")
+        print("="*60)
+        
+        # Test symbols as specified in the review request
+        test_symbols = ["TCS", "RELIANCE"]
+        
+        for symbol in test_symbols:
+            print(f"\n🔍 Testing Investment Checklists for {symbol}")
+            print("-" * 40)
+            
+            # Get stock data
+            success, stock_data = self.run_test(f"Get Stock Data - {symbol}", "GET", f"stocks/{symbol}", 200)
+            
+            if not success or not stock_data:
+                print(f"❌ Failed to get stock data for {symbol}")
+                continue
+            
+            # Check for investment_checklists object
+            investment_checklists = stock_data.get("investment_checklists")
+            if not investment_checklists:
+                print(f"❌ No investment_checklists object found for {symbol}")
+                continue
+                
+            print(f"✅ Investment checklists object found for {symbol}")
+            
+            # =================================================================
+            # TEST 1: SHORT-TERM CHECKLIST (10 items ST1-ST10)
+            # =================================================================
+            print(f"\n📋 Testing Short-Term Checklist for {symbol}")
+            
+            short_term = investment_checklists.get("short_term")
+            if not short_term:
+                print(f"❌ No short_term checklist found for {symbol}")
+                continue
+            
+            # Check checklist array
+            st_checklist = short_term.get("checklist", [])
+            if len(st_checklist) != 10:
+                print(f"❌ Short-term checklist should have 10 items, found {len(st_checklist)}")
+            else:
+                print(f"✅ Short-term checklist has correct 10 items")
+            
+            # Verify ST1-ST10 IDs
+            expected_st_ids = [f"ST{i}" for i in range(1, 11)]
+            found_st_ids = [item.get("id") for item in st_checklist]
+            missing_st_ids = set(expected_st_ids) - set(found_st_ids)
+            
+            if missing_st_ids:
+                print(f"❌ Missing short-term checklist IDs: {missing_st_ids}")
+            else:
+                print(f"✅ All short-term checklist IDs (ST1-ST10) present")
+            
+            # Verify structure of each checklist item
+            required_checklist_fields = ["id", "criterion", "passed", "value", "is_deal_breaker", "importance"]
+            st_structure_valid = True
+            
+            for item in st_checklist:
+                for field in required_checklist_fields:
+                    if field not in item:
+                        print(f"❌ Short-term checklist item {item.get('id', 'Unknown')} missing field: {field}")
+                        st_structure_valid = False
+                        
+                # Verify passed is boolean
+                if not isinstance(item.get("passed"), bool):
+                    print(f"❌ Short-term checklist item {item.get('id')} 'passed' field is not boolean: {type(item.get('passed'))}")
+                    st_structure_valid = False
+                    
+                # Verify is_deal_breaker is boolean
+                if not isinstance(item.get("is_deal_breaker"), bool):
+                    print(f"❌ Short-term checklist item {item.get('id')} 'is_deal_breaker' field is not boolean: {type(item.get('is_deal_breaker'))}")
+                    st_structure_valid = False
+            
+            if st_structure_valid:
+                print(f"✅ Short-term checklist structure validation passed")
+            
+            # Check summary object
+            st_summary = short_term.get("summary")
+            if not st_summary:
+                print(f"❌ No summary object found in short-term checklist for {symbol}")
+            else:
+                required_summary_fields = ["total", "passed", "failed", "deal_breaker_failures", "verdict", "score"]
+                summary_valid = True
+                
+                for field in required_summary_fields:
+                    if field not in st_summary:
+                        print(f"❌ Short-term summary missing field: {field}")
+                        summary_valid = False
+                
+                # Verify verdict is PASS/FAIL/CAUTION
+                verdict = st_summary.get("verdict")
+                valid_verdicts = ["PASS", "FAIL", "CAUTION"]
+                if verdict not in valid_verdicts:
+                    print(f"❌ Invalid short-term verdict: {verdict}")
+                    summary_valid = False
+                
+                if summary_valid:
+                    print(f"✅ Short-term summary structure validation passed")
+                    print(f"   Total: {st_summary.get('total')}, Passed: {st_summary.get('passed')}, Verdict: {st_summary.get('verdict')}")
+            
+            # =================================================================
+            # TEST 2: LONG-TERM CHECKLIST (13 items LT1-LT13)
+            # =================================================================
+            print(f"\n📋 Testing Long-Term Checklist for {symbol}")
+            
+            long_term = investment_checklists.get("long_term")
+            if not long_term:
+                print(f"❌ No long_term checklist found for {symbol}")
+                continue
+            
+            # Check checklist array
+            lt_checklist = long_term.get("checklist", [])
+            if len(lt_checklist) != 13:
+                print(f"❌ Long-term checklist should have 13 items, found {len(lt_checklist)}")
+            else:
+                print(f"✅ Long-term checklist has correct 13 items")
+            
+            # Verify LT1-LT13 IDs
+            expected_lt_ids = [f"LT{i}" for i in range(1, 14)]
+            found_lt_ids = [item.get("id") for item in lt_checklist]
+            missing_lt_ids = set(expected_lt_ids) - set(found_lt_ids)
+            
+            if missing_lt_ids:
+                print(f"❌ Missing long-term checklist IDs: {missing_lt_ids}")
+            else:
+                print(f"✅ All long-term checklist IDs (LT1-LT13) present")
+            
+            # Verify structure of each checklist item
+            lt_structure_valid = True
+            
+            for item in lt_checklist:
+                for field in required_checklist_fields:
+                    if field not in item:
+                        print(f"❌ Long-term checklist item {item.get('id', 'Unknown')} missing field: {field}")
+                        lt_structure_valid = False
+                        
+                # Verify passed is boolean
+                if not isinstance(item.get("passed"), bool):
+                    print(f"❌ Long-term checklist item {item.get('id')} 'passed' field is not boolean: {type(item.get('passed'))}")
+                    lt_structure_valid = False
+                    
+                # Verify is_deal_breaker is boolean
+                if not isinstance(item.get("is_deal_breaker"), bool):
+                    print(f"❌ Long-term checklist item {item.get('id')} 'is_deal_breaker' field is not boolean: {type(item.get('is_deal_breaker'))}")
+                    lt_structure_valid = False
+            
+            if lt_structure_valid:
+                print(f"✅ Long-term checklist structure validation passed")
+            
+            # Check summary object
+            lt_summary = long_term.get("summary")
+            if not lt_summary:
+                print(f"❌ No summary object found in long-term checklist for {symbol}")
+            else:
+                summary_valid = True
+                
+                for field in required_summary_fields:
+                    if field not in lt_summary:
+                        print(f"❌ Long-term summary missing field: {field}")
+                        summary_valid = False
+                
+                # Verify verdict is PASS/FAIL/CAUTION
+                verdict = lt_summary.get("verdict")
+                if verdict not in valid_verdicts:
+                    print(f"❌ Invalid long-term verdict: {verdict}")
+                    summary_valid = False
+                
+                if summary_valid:
+                    print(f"✅ Long-term summary structure validation passed")
+                    print(f"   Total: {lt_summary.get('total')}, Passed: {lt_summary.get('passed')}, Verdict: {lt_summary.get('verdict')}")
+            
+            print(f"\n✅ Investment checklists test completed for {symbol}")
+            print("-" * 40)
+
+    def test_data_extraction_pipeline(self):
+        """Test Data Extraction Pipeline API endpoints for medium priority items"""
+        print("\n" + "="*60)
+        print("TESTING DATA EXTRACTION PIPELINE API - MEDIUM PRIORITY")
+        print("="*60)
+        
+        # =================================================================
+        # TEST 1: GET /api/extraction/status
+        # =================================================================
+        print(f"\n🔍 Testing GET /api/extraction/status")
+        print("-" * 40)
+        
+        success, status_data = self.run_test("Extraction Status", "GET", "extraction/status", 200)
+        
+        if success and status_data:
+            # Verify required fields
+            required_status_fields = ["pipeline_available", "available_extractors", "features"]
+            status_valid = True
+            
+            for field in required_status_fields:
+                if field not in status_data:
+                    print(f"❌ Missing field in extraction status: {field}")
+                    status_valid = False
+                else:
+                    print(f"✅ Found field: {field}")
+            
+            # Check pipeline_available is boolean
+            pipeline_available = status_data.get("pipeline_available")
+            if not isinstance(pipeline_available, bool):
+                print(f"❌ pipeline_available should be boolean, got: {type(pipeline_available)}")
+                status_valid = False
+            else:
+                print(f"✅ pipeline_available: {pipeline_available}")
+            
+            # Check available_extractors is list
+            available_extractors = status_data.get("available_extractors")
+            if not isinstance(available_extractors, list):
+                print(f"❌ available_extractors should be list, got: {type(available_extractors)}")
+                status_valid = False
+            else:
+                print(f"✅ available_extractors: {available_extractors}")
+            
+            # Check features object
+            features = status_data.get("features")
+            if not isinstance(features, dict):
+                print(f"❌ features should be dict, got: {type(features)}")
+                status_valid = False
+            else:
+                print(f"✅ features object found")
+                # Check for expected feature counts
+                expected_features = {
+                    "field_definitions": 160,
+                    "deal_breakers": 10,
+                    "risk_penalties": 10,
+                    "quality_boosters": 9
+                }
+                
+                for feature, expected_count in expected_features.items():
+                    actual_count = features.get(feature)
+                    if actual_count != expected_count:
+                        print(f"⚠️  Feature {feature}: expected {expected_count}, got {actual_count}")
+                    else:
+                        print(f"✅ Feature {feature}: {actual_count}")
+            
+            if status_valid:
+                print(f"✅ Extraction status endpoint validation passed")
+        
+        # =================================================================
+        # TEST 2: GET /api/extraction/fields
+        # =================================================================
+        print(f"\n🔍 Testing GET /api/extraction/fields")
+        print("-" * 40)
+        
+        success, fields_data = self.run_test("Extraction Fields", "GET", "extraction/fields", 200)
+        
+        if success and fields_data:
+            # Verify required fields
+            required_fields_fields = ["total_fields", "categories", "fields_by_category"]
+            fields_valid = True
+            
+            for field in required_fields_fields:
+                if field not in fields_data:
+                    print(f"❌ Missing field in extraction fields: {field}")
+                    fields_valid = False
+                else:
+                    print(f"✅ Found field: {field}")
+            
+            # Check total_fields is 160
+            total_fields = fields_data.get("total_fields")
+            if total_fields != 160:
+                print(f"❌ Expected 160 total fields, got: {total_fields}")
+                fields_valid = False
+            else:
+                print(f"✅ Total fields: {total_fields}")
+            
+            # Check categories is list with 13 categories
+            categories = fields_data.get("categories", [])
+            if not isinstance(categories, list):
+                print(f"❌ categories should be list, got: {type(categories)}")
+                fields_valid = False
+            elif len(categories) != 13:
+                print(f"❌ Expected 13 categories, got: {len(categories)}")
+                fields_valid = False
+            else:
+                print(f"✅ Categories count: {len(categories)}")
+                print(f"   Categories: {categories}")
+            
+            # Check fields_by_category structure
+            fields_by_category = fields_data.get("fields_by_category", {})
+            if not isinstance(fields_by_category, dict):
+                print(f"❌ fields_by_category should be dict, got: {type(fields_by_category)}")
+                fields_valid = False
+            else:
+                print(f"✅ fields_by_category object found")
+                
+                # Verify each category has fields with proper structure
+                total_field_count = 0
+                for category, fields in fields_by_category.items():
+                    if not isinstance(fields, list):
+                        print(f"❌ Category {category} should have list of fields, got: {type(fields)}")
+                        fields_valid = False
+                        continue
+                    
+                    total_field_count += len(fields)
+                    print(f"   {category}: {len(fields)} fields")
+                    
+                    # Check structure of first field in each category
+                    if fields:
+                        field = fields[0]
+                        required_field_attrs = ["name", "field_id", "data_type", "unit", "priority", "update_frequency", "source", "used_for"]
+                        for attr in required_field_attrs:
+                            if attr not in field:
+                                print(f"❌ Field in {category} missing attribute: {attr}")
+                                fields_valid = False
+                
+                # Verify total field count matches
+                if total_field_count != 160:
+                    print(f"❌ Sum of fields across categories ({total_field_count}) doesn't match total_fields (160)")
+                    fields_valid = False
+                else:
+                    print(f"✅ Field count verification passed: {total_field_count}")
+            
+            if fields_valid:
+                print(f"✅ Extraction fields endpoint validation passed")
+        
+        print(f"\n✅ Data extraction pipeline API test completed")
+        print("-" * 40)
+
     def run_all_tests(self):
         """Run all test suites"""
         print("🚀 Starting Stock Analysis Platform API Tests")
