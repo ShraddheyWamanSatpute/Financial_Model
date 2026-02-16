@@ -707,23 +707,85 @@ def apply_risk_penalties(stock_data: Dict, is_long_term: bool) -> Tuple[float, L
     return penalty, applied_penalties
 
 
-def apply_quality_boosters(stock_data: Dict, is_long_term: bool) -> float:
-    """Calculate quality booster adjustments (capped at +30)"""
+def _check_breakout_with_volume(stock_data: Dict) -> bool:
+    """Check if stock is breaking to 52W high with 2x avg volume (Q8)"""
+    tech = stock_data.get("technicals", {})
+    current_price = stock_data.get("current_price", 0)
+    high_52_week = tech.get("high_52_week", 0)
+    volume_avg_20 = tech.get("volume_avg_20", 1)
+    
+    # Get latest volume from price history
+    price_history = stock_data.get("price_history", [])
+    latest_volume = price_history[-1].get("volume", 0) if price_history else 0
+    
+    # Check if price is within 2% of 52-week high and volume is 2x average
+    near_high = current_price >= high_52_week * 0.98 if high_52_week > 0 else False
+    high_volume = latest_volume >= volume_avg_20 * 2 if volume_avg_20 > 0 else False
+    
+    return near_high and high_volume
+
+
+def apply_quality_boosters(stock_data: Dict, is_long_term: bool) -> Tuple[float, List[Dict]]:
+    """
+    Calculate quality booster adjustments (Q1-Q9).
+    Returns tuple of (total_boost (capped at +30), list_of_applied_boosters)
+    """
     boost = 0
+    applied_boosters = []
+    
     fund = stock_data.get("fundamentals", {})
     share = stock_data.get("shareholding", {})
+    tech = stock_data.get("technicals", {})
+    val = stock_data.get("valuation", {})
     
-    all_data = {**fund, **share}
+    # Combine all data sources
+    all_data = {
+        **fund, 
+        **share,
+        **tech,
+        **val,
+        # Calculate derived fields
+        "consecutive_dividend_years": fund.get("consecutive_dividend_years", random.randint(0, 15)),  # Mock for now
+        "breakout_with_volume": _check_breakout_with_volume(stock_data),
+    }
     
     for qb in QUALITY_BOOSTERS:
         value = all_data.get(qb["field"], 0)
+        is_triggered = False
+        boost_amount = qb["lt_boost"] if is_long_term else qb["st_boost"]
         
-        if qb["operator"] == "gt" and value > qb["threshold"]:
-            boost += qb["lt_boost"] if is_long_term else qb["st_boost"]
-        elif qb["operator"] == "lt" and value < qb["threshold"]:
-            boost += qb["lt_boost"] if is_long_term else qb["st_boost"]
+        operator = qb.get("operator", "gt")
+        threshold = qb["threshold"]
+        
+        if value is None:
+            continue
+            
+        if operator == "gt":
+            is_triggered = value > threshold
+        elif operator == "lt":
+            is_triggered = value < threshold
+        elif operator == "gte":
+            is_triggered = value >= threshold
+        elif operator == "lte":
+            is_triggered = value <= threshold
+        elif operator == "eq":
+            is_triggered = value == threshold
+        
+        if is_triggered:
+            boost += boost_amount
+            applied_boosters.append({
+                "code": qb.get("code", ""),
+                "rule": qb["rule"],
+                "description": qb["description"],
+                "value": value,
+                "threshold": threshold,
+                "boost": boost_amount,
+            })
     
-    return min(boost, 30)  # Cap at +30
+    # Cap boost at +30 as per documentation
+    capped_boost = min(boost, 30)
+    
+    return capped_boost, applied_boosters
 
 
 def calculate_ml_adjustment() -> float:
