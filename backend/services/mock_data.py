@@ -197,11 +197,14 @@ def generate_technicals(prices: List[Dict]) -> Dict:
 
 
 def generate_shareholding() -> Dict:
-    """Generate shareholding pattern"""
+    """Generate shareholding pattern with all required fields"""
     promoter = random.uniform(30, 75)
     fii = random.uniform(5, 35)
     dii = random.uniform(5, 25)
     public = 100 - promoter - fii - dii
+    
+    # Generate promoter holding change (for R4)
+    promoter_change = random.uniform(-3, 3)  # Usually small changes
     
     return {
         "promoter_holding": round(promoter, 2),
@@ -209,6 +212,7 @@ def generate_shareholding() -> Dict:
         "dii_holding": round(dii, 2),
         "public_holding": round(max(0, public), 2),
         "promoter_pledging": round(random.uniform(0, 20), 2),
+        "promoter_holding_change": round(promoter_change, 2),  # For R4 penalty
     }
 
 
