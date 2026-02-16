@@ -530,82 +530,279 @@ export default function StockAnalyzer() {
 
         {/* Checklist Tab */}
         <TabsContent value="checklist" className="space-y-4">
+          {/* Investment Checklists Summary */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Short-Term Checklist Summary Card */}
+            <Card className={cn(
+              "bg-[#18181B] border-2",
+              analysis?.investment_checklists?.short_term?.summary?.verdict === "PASS" 
+                ? "border-green-500/50" 
+                : analysis?.investment_checklists?.short_term?.summary?.verdict === "FAIL"
+                ? "border-red-500/50"
+                : "border-yellow-500/50"
+            )}>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    📋 Short-Term Checklist
+                    <Badge variant="outline" className="text-xs">1-6 months</Badge>
+                  </CardTitle>
+                  <Badge 
+                    className={cn(
+                      "text-xs",
+                      analysis?.investment_checklists?.short_term?.summary?.verdict === "PASS" 
+                        ? "bg-green-500/20 text-green-400" 
+                        : analysis?.investment_checklists?.short_term?.summary?.verdict === "FAIL"
+                        ? "bg-red-500/20 text-red-400"
+                        : "bg-yellow-500/20 text-yellow-400"
+                    )}
+                  >
+                    {analysis?.investment_checklists?.short_term?.summary?.verdict || "N/A"}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold font-mono text-green-400">
+                      {analysis?.investment_checklists?.short_term?.summary?.passed || 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Passed</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-3xl font-bold font-mono text-red-400">
+                      {analysis?.investment_checklists?.short_term?.summary?.failed || 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Failed</p>
+                  </div>
+                  <div className="text-center flex-1">
+                    <p className="text-3xl font-bold font-mono">
+                      {analysis?.investment_checklists?.short_term?.summary?.score || 0}%
+                    </p>
+                    <p className="text-xs text-muted-foreground">Score</p>
+                  </div>
+                </div>
+                {analysis?.investment_checklists?.short_term?.summary?.deal_breaker_failures > 0 && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-md p-2 mb-3">
+                    <p className="text-xs text-red-400 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      {analysis?.investment_checklists?.short_term?.summary?.deal_breaker_failures} Deal-Breaker(s) Failed
+                    </p>
+                  </div>
+                )}
+                <ScrollArea className="h-[280px] pr-4">
+                  <div className="space-y-2">
+                    {(analysis?.investment_checklists?.short_term?.checklist || []).map((item, idx) => (
+                      <div
+                        key={idx}
+                        className={cn(
+                          "p-2 rounded-md border",
+                          item.passed 
+                            ? "bg-green-500/5 border-green-500/20" 
+                            : item.is_deal_breaker 
+                            ? "bg-red-500/10 border-red-500/30" 
+                            : "bg-red-500/5 border-red-500/20"
+                        )}
+                      >
+                        <div className="flex items-start gap-2">
+                          {item.passed ? (
+                            <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                          ) : (
+                            <XCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-mono text-muted-foreground">{item.id}</span>
+                              {item.is_deal_breaker && (
+                                <Badge variant="destructive" className="text-[9px] px-1 py-0">DEAL-BREAKER</Badge>
+                              )}
+                            </div>
+                            <p className="text-xs font-medium leading-tight">{item.criterion}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">{item.value}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+
+            {/* Long-Term Checklist Summary Card */}
+            <Card className={cn(
+              "bg-[#18181B] border-2",
+              analysis?.investment_checklists?.long_term?.summary?.verdict === "PASS" 
+                ? "border-green-500/50" 
+                : analysis?.investment_checklists?.long_term?.summary?.verdict === "FAIL"
+                ? "border-red-500/50"
+                : "border-yellow-500/50"
+            )}>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    📋 Long-Term Checklist
+                    <Badge variant="outline" className="text-xs">3-10+ years</Badge>
+                  </CardTitle>
+                  <Badge 
+                    className={cn(
+                      "text-xs",
+                      analysis?.investment_checklists?.long_term?.summary?.verdict === "PASS" 
+                        ? "bg-green-500/20 text-green-400" 
+                        : analysis?.investment_checklists?.long_term?.summary?.verdict === "FAIL"
+                        ? "bg-red-500/20 text-red-400"
+                        : "bg-yellow-500/20 text-yellow-400"
+                    )}
+                  >
+                    {analysis?.investment_checklists?.long_term?.summary?.verdict || "N/A"}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold font-mono text-green-400">
+                      {analysis?.investment_checklists?.long_term?.summary?.passed || 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Passed</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-3xl font-bold font-mono text-red-400">
+                      {analysis?.investment_checklists?.long_term?.summary?.failed || 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Failed</p>
+                  </div>
+                  <div className="text-center flex-1">
+                    <p className="text-3xl font-bold font-mono">
+                      {analysis?.investment_checklists?.long_term?.summary?.score || 0}%
+                    </p>
+                    <p className="text-xs text-muted-foreground">Score</p>
+                  </div>
+                </div>
+                {analysis?.investment_checklists?.long_term?.summary?.deal_breaker_failures > 0 && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-md p-2 mb-3">
+                    <p className="text-xs text-red-400 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      {analysis?.investment_checklists?.long_term?.summary?.deal_breaker_failures} Deal-Breaker(s) Failed
+                    </p>
+                  </div>
+                )}
+                <ScrollArea className="h-[280px] pr-4">
+                  <div className="space-y-2">
+                    {(analysis?.investment_checklists?.long_term?.checklist || []).map((item, idx) => (
+                      <div
+                        key={idx}
+                        className={cn(
+                          "p-2 rounded-md border",
+                          item.passed 
+                            ? "bg-green-500/5 border-green-500/20" 
+                            : item.is_deal_breaker 
+                            ? "bg-red-500/10 border-red-500/30" 
+                            : "bg-red-500/5 border-red-500/20"
+                        )}
+                      >
+                        <div className="flex items-start gap-2">
+                          {item.passed ? (
+                            <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                          ) : (
+                            <XCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-mono text-muted-foreground">{item.id}</span>
+                              {item.is_deal_breaker && (
+                                <Badge variant="destructive" className="text-[9px] px-1 py-0">DEAL-BREAKER</Badge>
+                              )}
+                            </div>
+                            <p className="text-xs font-medium leading-tight">{item.criterion}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">{item.value}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Deal Breakers, Strengths & Risks Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Deal Breakers */}
             <Card className="bg-[#18181B] border-[#27272A]">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-red-500" />
-                  Deal Breaker Checks
+                  Deal Breaker Checks (D1-D10)
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {(analysis?.deal_breakers || []).map((db, idx) => (
-                    <div
-                      key={idx}
-                      className={cn(
-                        "flex items-start gap-2 p-2 rounded-sm",
-                        db.triggered ? "bg-red-500/10" : "bg-green-500/5"
-                      )}
-                    >
-                      {db.triggered ? (
-                        <XCircle className="w-4 h-4 text-red-500 mt-0.5" />
-                      ) : (
-                        <CheckCircle className="w-4 h-4 text-green-500 mt-0.5" />
-                      )}
-                      <div>
-                        <p className="text-sm">{db.description}</p>
-                        <p className="text-xs text-muted-foreground">
-                          Value: {db.value?.toFixed(2)} | Threshold: {db.threshold}
-                        </p>
+                <ScrollArea className="h-[200px] pr-2">
+                  <div className="space-y-2">
+                    {(analysis?.deal_breakers || []).map((db, idx) => (
+                      <div
+                        key={idx}
+                        className={cn(
+                          "flex items-start gap-2 p-2 rounded-sm",
+                          db.triggered ? "bg-red-500/10" : "bg-green-500/5"
+                        )}
+                      >
+                        {db.triggered ? (
+                          <XCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                        ) : (
+                          <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-xs">{db.description}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            Value: {typeof db.value === 'number' ? db.value?.toFixed(2) : db.value} | Threshold: {db.threshold}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                </ScrollArea>
               </CardContent>
             </Card>
 
-            {/* Strengths & Risks */}
-            <div className="space-y-4">
-              <Card className="bg-[#18181B] border-[#27272A]">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-green-500" />
-                    Key Strengths
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {(analysis?.top_strengths || []).map((strength, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-sm">
-                        <CheckCircle className="w-4 h-4 text-green-500 mt-0.5" />
-                        {strength}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+            {/* Key Strengths */}
+            <Card className="bg-[#18181B] border-[#27272A]">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-green-500" />
+                  Key Strengths
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {(analysis?.top_strengths || []).map((strength, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-sm">
+                      <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-xs">{strength}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
 
-              <Card className="bg-[#18181B] border-[#27272A]">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <TrendingDown className="w-4 h-4 text-red-500" />
-                    Key Risks
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {(analysis?.top_risks || []).map((risk, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-sm">
-                        <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5" />
-                        {risk}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            </div>
+            {/* Key Risks */}
+            <Card className="bg-[#18181B] border-[#27272A]">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <TrendingDown className="w-4 h-4 text-red-500" />
+                  Key Risks
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {(analysis?.top_risks || []).map((risk, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-sm">
+                      <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-xs">{risk}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
