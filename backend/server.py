@@ -62,6 +62,17 @@ except ImportError as e:
     ALERTS_AVAILABLE = False
     alerts_service = None
 
+# Import Data Extraction Pipeline
+try:
+    from data_extraction.pipeline.orchestrator import PipelineOrchestrator
+    from data_extraction.models.extraction_models import ExtractionStatus
+    EXTRACTION_PIPELINE_AVAILABLE = True
+    _pipeline_orchestrator = None  # Lazy initialization
+except ImportError as e:
+    logger.warning(f"Data extraction pipeline not available: {e}")
+    EXTRACTION_PIPELINE_AVAILABLE = False
+    _pipeline_orchestrator = None
+
 # Configuration
 USE_REAL_DATA = os.environ.get('USE_REAL_DATA', 'true').lower() == 'true'
 
