@@ -796,6 +796,12 @@ def generate_analysis(stock_data: Dict) -> Dict:
             "has_lt_deal_breaker": has_lt_deal_breaker,
             "has_st_deal_breaker": has_st_deal_breaker,
         },
+        "risk_penalties": {
+            "long_term": lt_penalties_list,
+            "short_term": st_penalties_list,
+            "lt_total_penalty": lt_penalty,
+            "st_total_penalty": st_penalty,
+        },
         "top_strengths": strengths[:3] if strengths else ["Diversified business model"],
         "top_risks": risks[:5] if risks else ["General market risk"],
         "bull_case": bull_case,
