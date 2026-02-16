@@ -1193,28 +1193,32 @@ async def get_field_definitions():
     try:
         from data_extraction.config.field_definitions import FIELD_DEFINITIONS, FIELDS_BY_CATEGORY
         
+        # Convert dataclass objects to dicts
+        fields_by_cat = {}
+        for cat, fields in FIELDS_BY_CATEGORY.items():
+            fields_by_cat[cat] = [
+                {
+                    "name": f.name,
+                    "field_id": f.field_id,
+                    "data_type": f.data_type.value if hasattr(f.data_type, 'value') else str(f.data_type),
+                    "unit": f.unit,
+                    "priority": f.priority.value if hasattr(f.priority, 'value') else str(f.priority),
+                    "update_frequency": f.update_frequency.value if hasattr(f.update_frequency, 'value') else str(f.update_frequency),
+                    "source": f.source.value if hasattr(f.source, 'value') else str(f.source),
+                    "used_for": f.used_for,
+                }
+                for f in fields
+            ]
+        
         return {
             "total_fields": len(FIELD_DEFINITIONS),
             "categories": list(FIELDS_BY_CATEGORY.keys()),
-            "fields_by_category": {
-                cat: [
-                    {
-                        "name": f["name"],
-                        "display_name": f["display_name"],
-                        "data_type": f["data_type"],
-                        "unit": f.get("unit"),
-                        "is_derived": f.get("is_derived", False),
-                        "priority": f.get("priority", "medium"),
-                    }
-                    for f in fields
-                ]
-                for cat, fields in FIELDS_BY_CATEGORY.items()
-            }
+            "fields_by_category": fields_by_cat
         }
-    except ImportError:
+    except ImportError as e:
         raise HTTPException(
             status_code=503,
-            detail="Field definitions not available"
+            detail=f"Field definitions not available: {str(e)}"
         )
 
 
