@@ -1160,3 +1160,358 @@ def generate_ml_prediction(stock_data: Dict) -> Dict:
         "anomaly_score": round(random.uniform(0, 0.3), 2),
         "sentiment_score": round(random.uniform(-0.5, 0.5), 2),
     }
+
+
+
+def generate_investment_checklists(stock_data: Dict) -> Dict:
+    """
+    Generate Short-Term (10 items) and Long-Term (13 items) Investment Checklists
+    as per documentation Section 3.
+    
+    Items marked as [DEAL-BREAKER] should automatically disqualify the stock if failed.
+    """
+    fund = stock_data.get("fundamentals", {})
+    tech = stock_data.get("technicals", {})
+    val = stock_data.get("valuation", {})
+    share = stock_data.get("shareholding", {})
+    current_price = stock_data.get("current_price", 0)
+    
+    # ==========================================================================
+    # SHORT-TERM INVESTMENT CHECKLIST (1-6 months) - 10 items
+    # ==========================================================================
+    short_term_checklist = []
+    
+    # 1. Price is above 50-day moving average
+    sma_50 = tech.get("sma_50", current_price)
+    above_sma50 = current_price > sma_50 if sma_50 else False
+    short_term_checklist.append({
+        "id": "ST1",
+        "criterion": "Price is above 50-day moving average",
+        "passed": above_sma50,
+        "value": f"₹{current_price:.2f} vs SMA50: ₹{sma_50:.2f}" if sma_50 else "N/A",
+        "is_deal_breaker": False,
+        "importance": "medium"
+    })
+    
+    # 2. RSI is between 30-70 (not extreme)
+    rsi = tech.get("rsi_14", 50)
+    rsi_normal = 30 <= rsi <= 70 if rsi else True
+    short_term_checklist.append({
+        "id": "ST2",
+        "criterion": "RSI is between 30-70 (not extreme)",
+        "passed": rsi_normal,
+        "value": f"RSI: {rsi:.1f}" if rsi else "N/A",
+        "is_deal_breaker": False,
+        "importance": "medium"
+    })
+    
+    # 3. Volume confirms price trend (rising)
+    volume_avg = tech.get("volume_avg_20", 0)
+    volume_rising = volume_avg > 100000  # Simplified check
+    short_term_checklist.append({
+        "id": "ST3",
+        "criterion": "Volume confirms price trend (rising)",
+        "passed": volume_rising,
+        "value": f"Avg Vol: {volume_avg:,.0f}",
+        "is_deal_breaker": False,
+        "importance": "medium"
+    })
+    
+    # 4. No major earnings report in next 2 weeks
+    # For mock data, assume this is randomly true/false
+    no_earnings_soon = random.random() > 0.2
+    short_term_checklist.append({
+        "id": "ST4",
+        "criterion": "No major earnings report in next 2 weeks",
+        "passed": no_earnings_soon,
+        "value": "No upcoming earnings" if no_earnings_soon else "Earnings in 2 weeks",
+        "is_deal_breaker": False,
+        "importance": "medium"
+    })
+    
+    # 5. Sector/industry is showing relative strength
+    sector_strength = random.random() > 0.3  # Mock
+    short_term_checklist.append({
+        "id": "ST5",
+        "criterion": "Sector/industry is showing relative strength",
+        "passed": sector_strength,
+        "value": "Outperforming" if sector_strength else "Underperforming",
+        "is_deal_breaker": False,
+        "importance": "medium"
+    })
+    
+    # 6. No pending negative catalysts (lawsuits, regulatory)
+    sebi_investigation = stock_data.get("sebi_investigation", False)
+    no_negative_catalysts = not sebi_investigation
+    short_term_checklist.append({
+        "id": "ST6",
+        "criterion": "No pending negative catalysts (lawsuits, regulatory)",
+        "passed": no_negative_catalysts,
+        "value": "No issues detected" if no_negative_catalysts else "SEBI investigation active",
+        "is_deal_breaker": False,
+        "importance": "high"
+    })
+    
+    # 7. [DEAL-BREAKER] Stock is not halted or under SEC/SEBI investigation
+    stock_status = stock_data.get("stock_status", "ACTIVE")
+    stock_active = stock_status == "ACTIVE" and not sebi_investigation
+    short_term_checklist.append({
+        "id": "ST7",
+        "criterion": "[DEAL-BREAKER] Stock is not halted or under investigation",
+        "passed": stock_active,
+        "value": f"Status: {stock_status}" + (" (SEBI investigation)" if sebi_investigation else ""),
+        "is_deal_breaker": True,
+        "importance": "critical"
+    })
+    
+    # 8. [DEAL-BREAKER] Average daily volume > 100,000 (liquidity)
+    liquidity_ok = volume_avg >= 100000
+    short_term_checklist.append({
+        "id": "ST8",
+        "criterion": "[DEAL-BREAKER] Average daily volume > 100,000 (liquidity)",
+        "passed": liquidity_ok,
+        "value": f"Volume: {volume_avg:,.0f}",
+        "is_deal_breaker": True,
+        "importance": "critical"
+    })
+    
+    # 9. Clear support level exists for stop-loss placement
+    support = tech.get("support_level", 0)
+    has_support = support > 0 and support < current_price
+    short_term_checklist.append({
+        "id": "ST9",
+        "criterion": "Clear support level exists for stop-loss placement",
+        "passed": has_support,
+        "value": f"Support: ₹{support:.2f}" if support else "N/A",
+        "is_deal_breaker": False,
+        "importance": "medium"
+    })
+    
+    # 10. Risk/reward ratio is at least 2:1
+    resistance = tech.get("resistance_level", current_price * 1.1)
+    support = tech.get("support_level", current_price * 0.95)
+    upside = resistance - current_price
+    downside = current_price - support
+    risk_reward = upside / downside if downside > 0 else 0
+    rr_good = risk_reward >= 2.0
+    short_term_checklist.append({
+        "id": "ST10",
+        "criterion": "Risk/reward ratio is at least 2:1",
+        "passed": rr_good,
+        "value": f"R/R: {risk_reward:.1f}:1",
+        "is_deal_breaker": False,
+        "importance": "high"
+    })
+    
+    # ==========================================================================
+    # LONG-TERM INVESTMENT CHECKLIST (3-10+ years) - 13 items
+    # ==========================================================================
+    long_term_checklist = []
+    
+    # 1. Revenue has grown for at least 3 consecutive years
+    revenue_history = fund.get("revenue_history", [])
+    revenue_growth_3yr = True
+    if len(revenue_history) >= 4:
+        for i in range(len(revenue_history) - 3, len(revenue_history)):
+            if i > 0 and revenue_history[i] <= revenue_history[i-1]:
+                revenue_growth_3yr = False
+                break
+    else:
+        revenue_growth_yoy = fund.get("revenue_growth_yoy", 0)
+        revenue_growth_3yr = revenue_growth_yoy > 0
+    
+    long_term_checklist.append({
+        "id": "LT1",
+        "criterion": "Revenue has grown for at least 3 consecutive years",
+        "passed": revenue_growth_3yr,
+        "value": f"YoY Growth: {fund.get('revenue_growth_yoy', 0):.1f}%",
+        "is_deal_breaker": False,
+        "importance": "high"
+    })
+    
+    # 2. Company is profitable (positive net income)
+    net_profit = fund.get("net_profit", 0)
+    profitable = net_profit > 0
+    long_term_checklist.append({
+        "id": "LT2",
+        "criterion": "Company is profitable (positive net income)",
+        "passed": profitable,
+        "value": f"Net Profit: ₹{net_profit:.2f} Cr",
+        "is_deal_breaker": False,
+        "importance": "high"
+    })
+    
+    # 3. ROE > 15% consistently
+    roe = fund.get("roe", 0)
+    roe_good = roe >= 15
+    long_term_checklist.append({
+        "id": "LT3",
+        "criterion": "ROE > 15% consistently",
+        "passed": roe_good,
+        "value": f"ROE: {roe:.1f}%",
+        "is_deal_breaker": False,
+        "importance": "high"
+    })
+    
+    # 4. Free cash flow is positive and growing
+    fcf = fund.get("free_cash_flow", 0)
+    fcf_positive = fcf > 0
+    long_term_checklist.append({
+        "id": "LT4",
+        "criterion": "Free cash flow is positive and growing",
+        "passed": fcf_positive,
+        "value": f"FCF: ₹{fcf:.2f} Cr",
+        "is_deal_breaker": False,
+        "importance": "high"
+    })
+    
+    # 5. Debt-to-equity ratio < 1.5 (or appropriate for industry)
+    de_ratio = fund.get("debt_to_equity", 0)
+    de_ok = de_ratio < 1.5
+    long_term_checklist.append({
+        "id": "LT5",
+        "criterion": "Debt-to-equity ratio < 1.5 (or appropriate for industry)",
+        "passed": de_ok,
+        "value": f"D/E: {de_ratio:.2f}",
+        "is_deal_breaker": False,
+        "importance": "high"
+    })
+    
+    # 6. Company has identifiable competitive advantage (moat)
+    # Mock assessment based on margins and market position
+    operating_margin = fund.get("operating_margin", 0)
+    has_moat = operating_margin > 15
+    long_term_checklist.append({
+        "id": "LT6",
+        "criterion": "Company has identifiable competitive advantage (moat)",
+        "passed": has_moat,
+        "value": f"Op. Margin: {operating_margin:.1f}% (proxy for moat)",
+        "is_deal_breaker": False,
+        "importance": "medium"
+    })
+    
+    # 7. Management has track record of shareholder value creation
+    promoter_holding = share.get("promoter_holding", 0)
+    good_management = promoter_holding > 30 and share.get("promoter_pledging", 0) < 30
+    long_term_checklist.append({
+        "id": "LT7",
+        "criterion": "Management has track record of shareholder value creation",
+        "passed": good_management,
+        "value": f"Promoter: {promoter_holding:.1f}%, Pledging: {share.get('promoter_pledging', 0):.1f}%",
+        "is_deal_breaker": False,
+        "importance": "medium"
+    })
+    
+    # 8. Industry has secular growth tailwinds
+    # Mock - based on sector
+    sector = stock_data.get("sector", "")
+    growth_sectors = ["IT", "Technology", "Pharma", "Consumer", "Financial"]
+    has_tailwinds = sector in growth_sectors
+    long_term_checklist.append({
+        "id": "LT8",
+        "criterion": "Industry has secular growth tailwinds",
+        "passed": has_tailwinds,
+        "value": f"Sector: {sector}",
+        "is_deal_breaker": False,
+        "importance": "medium"
+    })
+    
+    # 9. P/E ratio is reasonable relative to growth (PEG < 2)
+    peg = val.get("peg_ratio", 2)
+    peg_ok = peg < 2
+    long_term_checklist.append({
+        "id": "LT9",
+        "criterion": "P/E ratio is reasonable relative to growth (PEG < 2)",
+        "passed": peg_ok,
+        "value": f"PEG: {peg:.2f}",
+        "is_deal_breaker": False,
+        "importance": "high"
+    })
+    
+    # 10. [DEAL-BREAKER] No accounting irregularities or fraud history
+    fraud_history = stock_data.get("fraud_history", False)
+    no_fraud = not fraud_history and not sebi_investigation
+    long_term_checklist.append({
+        "id": "LT10",
+        "criterion": "[DEAL-BREAKER] No accounting irregularities or fraud history",
+        "passed": no_fraud,
+        "value": "No issues" if no_fraud else "Issues detected",
+        "is_deal_breaker": True,
+        "importance": "critical"
+    })
+    
+    # 11. [DEAL-BREAKER] Company is not facing existential disruption threat
+    # Mock - assume most companies pass
+    disruption_risk = stock_data.get("disruption_risk", "Low")
+    no_disruption = disruption_risk != "High"
+    long_term_checklist.append({
+        "id": "LT11",
+        "criterion": "[DEAL-BREAKER] Company is not facing existential disruption threat",
+        "passed": no_disruption,
+        "value": f"Disruption Risk: {disruption_risk}",
+        "is_deal_breaker": True,
+        "importance": "critical"
+    })
+    
+    # 12. [DEAL-BREAKER] Interest coverage ratio > 3x
+    interest_coverage = fund.get("interest_coverage", 0)
+    ic_ok = interest_coverage >= 3
+    long_term_checklist.append({
+        "id": "LT12",
+        "criterion": "[DEAL-BREAKER] Interest coverage ratio > 3x",
+        "passed": ic_ok,
+        "value": f"Interest Coverage: {interest_coverage:.1f}x",
+        "is_deal_breaker": True,
+        "importance": "critical"
+    })
+    
+    # 13. I understand the business model and can explain it simply
+    # This is subjective - always pass for automated systems
+    long_term_checklist.append({
+        "id": "LT13",
+        "criterion": "Business model is understandable and explainable",
+        "passed": True,
+        "value": f"Industry: {stock_data.get('industry', 'N/A')}",
+        "is_deal_breaker": False,
+        "importance": "low"
+    })
+    
+    # ==========================================================================
+    # CALCULATE SUMMARY STATISTICS
+    # ==========================================================================
+    st_passed = sum(1 for item in short_term_checklist if item["passed"])
+    st_failed = len(short_term_checklist) - st_passed
+    st_deal_breaker_failed = sum(1 for item in short_term_checklist if item["is_deal_breaker"] and not item["passed"])
+    
+    lt_passed = sum(1 for item in long_term_checklist if item["passed"])
+    lt_failed = len(long_term_checklist) - lt_passed
+    lt_deal_breaker_failed = sum(1 for item in long_term_checklist if item["is_deal_breaker"] and not item["passed"])
+    
+    # Determine overall verdict for each checklist
+    st_verdict = "FAIL" if st_deal_breaker_failed > 0 else "PASS" if st_passed >= 7 else "CAUTION"
+    lt_verdict = "FAIL" if lt_deal_breaker_failed > 0 else "PASS" if lt_passed >= 10 else "CAUTION"
+    
+    return {
+        "short_term": {
+            "checklist": short_term_checklist,
+            "summary": {
+                "total": len(short_term_checklist),
+                "passed": st_passed,
+                "failed": st_failed,
+                "deal_breaker_failures": st_deal_breaker_failed,
+                "verdict": st_verdict,
+                "score": round((st_passed / len(short_term_checklist)) * 100, 1)
+            }
+        },
+        "long_term": {
+            "checklist": long_term_checklist,
+            "summary": {
+                "total": len(long_term_checklist),
+                "passed": lt_passed,
+                "failed": lt_failed,
+                "deal_breaker_failures": lt_deal_breaker_failed,
+                "verdict": lt_verdict,
+                "score": round((lt_passed / len(long_term_checklist)) * 100, 1)
+            }
+        }
+    }
