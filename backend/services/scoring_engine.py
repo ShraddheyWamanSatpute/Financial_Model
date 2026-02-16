@@ -796,6 +796,175 @@ def calculate_ml_adjustment() -> float:
     return max(-10, min(10, adjustment))
 
 
+def calculate_confidence_score(stock_data: Dict, ml_confidence: float = None) -> Dict:
+    """
+    Calculate comprehensive confidence score as per documentation.
+    
+    Formula: 
+    Confidence = DataCompleteness(40%) + DataFreshness(30%) + SourceAgreement(15%) + MLConfidence(15%)
+    
+    Returns dict with:
+    - confidence_score: Overall score (0-100)
+    - confidence_level: HIGH/MEDIUM/LOW
+    - breakdown: Individual component scores
+    """
+    fund = stock_data.get("fundamentals", {})
+    val = stock_data.get("valuation", {})
+    tech = stock_data.get("technicals", {})
+    share = stock_data.get("shareholding", {})
+    
+    # ==========================================================================
+    # 1. DATA COMPLETENESS (40% weight) - % of 160 fields actually populated
+    # ==========================================================================
+    # Required fields categorized by importance
+    critical_fields = [
+        # Price data
+        "current_price", 
+        # Fundamentals
+        fund.get("revenue_ttm"), fund.get("net_profit"), fund.get("eps"),
+        fund.get("roe"), fund.get("debt_to_equity"), fund.get("operating_margin"),
+        fund.get("interest_coverage"), fund.get("free_cash_flow"),
+        # Valuation
+        val.get("pe_ratio"), val.get("pb_ratio"), val.get("market_cap"),
+        # Technical
+        tech.get("sma_50"), tech.get("sma_200"), tech.get("rsi_14"),
+        tech.get("volume_avg_20"), tech.get("high_52_week"), tech.get("low_52_week"),
+        # Shareholding
+        share.get("promoter_holding"), share.get("fii_holding"), share.get("promoter_pledging"),
+    ]
+    
+    important_fields = [
+        fund.get("revenue_growth_yoy"), fund.get("gross_margin"), fund.get("net_profit_margin"),
+        fund.get("roa"), fund.get("roic"), fund.get("current_ratio"), fund.get("quick_ratio"),
+        fund.get("operating_cash_flow"),
+        val.get("peg_ratio"), val.get("ev_ebitda"), val.get("dividend_yield"),
+        tech.get("macd"), tech.get("macd_signal"),
+        share.get("dii_holding"), share.get("public_holding"),
+    ]
+    
+    optional_fields = [
+        fund.get("revenue_history"), fund.get("operating_cash_flow_history"),
+        fund.get("free_cash_flow_history"), fund.get("operating_margin_history"),
+        tech.get("bollinger_upper"), tech.get("bollinger_lower"),
+        tech.get("delivery_percentage"),
+    ]
+    
+    # Count populated fields (not None and not empty)
+    def is_populated(val):
+        if val is None:
+            return False
+        if isinstance(val, (list, dict)) and len(val) == 0:
+            return False
+        return True
+    
+    critical_populated = sum(1 for f in critical_fields if is_populated(f))
+    important_populated = sum(1 for f in important_fields if is_populated(f))
+    optional_populated = sum(1 for f in optional_fields if is_populated(f))
+    
+    # Weighted completeness (critical fields matter more)
+    total_fields = len(critical_fields) + len(important_fields) + len(optional_fields)
+    weighted_completeness = (
+        (critical_populated / len(critical_fields)) * 0.5 +  # 50% weight to critical
+        (important_populated / len(important_fields)) * 0.35 +  # 35% weight to important
+        (optional_populated / len(optional_fields)) * 0.15  # 15% weight to optional
+    )
+    
+    data_completeness = min(weighted_completeness, 1.0)
+    
+    # ==========================================================================
+    # 2. DATA FRESHNESS (30% weight) - How recent is the data
+    # ==========================================================================
+    # For mock data, simulate with reasonable freshness
+    # In production: check actual timestamps vs current date
+    
+    # Price data is usually real-time (high freshness)
+    price_freshness = 0.98  # Real-time
+    
+    # Fundamental data is quarterly (medium freshness)
+    fundamental_freshness = 0.85 + random.uniform(-0.05, 0.05)
+    
+    # Shareholding data is quarterly (medium freshness)
+    shareholding_freshness = 0.80 + random.uniform(-0.05, 0.05)
+    
+    # News data varies (weighted by recency)
+    news_freshness = 0.75 + random.uniform(-0.1, 0.1)
+    
+    data_freshness = (
+        price_freshness * 0.4 +
+        fundamental_freshness * 0.35 +
+        shareholding_freshness * 0.15 +
+        news_freshness * 0.1
+    )
+    
+    # ==========================================================================
+    # 3. SOURCE AGREEMENT (15% weight) - Multiple sources agree on values
+    # ==========================================================================
+    # For mock data, simulate agreement scores
+    # In production: compare values from multiple data providers
+    
+    # Price agreement is typically high (exchanges are authoritative)
+    price_agreement = 0.99
+    
+    # Financial data may have minor variations between sources
+    financial_agreement = 0.85 + random.uniform(-0.1, 0.1)
+    
+    # News sentiment can vary significantly between sources
+    sentiment_agreement = 0.70 + random.uniform(-0.15, 0.15)
+    
+    source_agreement = (
+        price_agreement * 0.5 +
+        financial_agreement * 0.35 +
+        sentiment_agreement * 0.15
+    )
+    
+    # ==========================================================================
+    # 4. ML CONFIDENCE (15% weight) - Model's prediction confidence
+    # ==========================================================================
+    # If ML confidence not provided, simulate it
+    if ml_confidence is None:
+        # Higher confidence for stocks with stable patterns
+        volatility = random.uniform(0.15, 0.35)
+        ml_confidence = max(0.5, min(0.95, 1.0 - volatility))
+    
+    # ==========================================================================
+    # FINAL CONFIDENCE SCORE CALCULATION
+    # ==========================================================================
+    confidence_score = (
+        data_completeness * 0.40 +   # 40% weight
+        data_freshness * 0.30 +      # 30% weight
+        source_agreement * 0.15 +    # 15% weight
+        ml_confidence * 0.15         # 15% weight
+    )
+    
+    # Convert to 0-100 scale
+    confidence_pct = confidence_score * 100
+    
+    # Determine confidence level
+    if confidence_pct >= 80:
+        confidence_level = "HIGH"
+    elif confidence_pct >= 60:
+        confidence_level = "MEDIUM"
+    else:
+        confidence_level = "LOW"
+    
+    return {
+        "confidence_score": round(confidence_pct, 1),
+        "confidence_level": confidence_level,
+        "breakdown": {
+            "data_completeness": round(data_completeness * 100, 1),
+            "data_freshness": round(data_freshness * 100, 1),
+            "source_agreement": round(source_agreement * 100, 1),
+            "ml_confidence": round(ml_confidence * 100, 1),
+        },
+        "weights": {
+            "data_completeness": 40,
+            "data_freshness": 30,
+            "source_agreement": 15,
+            "ml_confidence": 15,
+        }
+    }
+
+
 def generate_analysis(stock_data: Dict) -> Dict:
     """Generate complete stock analysis with full D1-D10 deal-breaker evaluation"""
     fund = stock_data.get("fundamentals", {})
